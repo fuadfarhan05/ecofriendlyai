@@ -1,0 +1,14 @@
+/* ChatGPT textarea green-mode styling */
+.green-mode {
+  background-color: rgba(0, 255, 0, 0.08) !important;
+  border: 2px solid #22c55e !important;
+  border-radius: 12px !important;
+  padding: 10px !important;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+}
+
+.green-mode:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(44, 234, 113, 0.3);
+}

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGPT Green Mode",
+  "version": "1.0",
+  "description": "Adds green UI effects and modifies ChatGPT behavior.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["background.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
