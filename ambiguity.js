@@ -64,6 +64,7 @@ function reduceAmbiguity(prompt) {
   let reduced = String(prompt || "");
 
   // Strip fluff mainly at the start/end (where politeness usually lives).
+  // Also strip fluff right after common separators (e.g. "— can you ...", "\ncan you ...", ": please ...")
   // Run multiple passes to handle stacked phrases like:
   // "Hey, can you please ... thanks in advance!"
   for (let pass = 0; pass < 4; pass++) {
@@ -79,6 +80,33 @@ function reduceAmbiguity(prompt) {
         "i"
       );
       const next = s.replace(re, "");
+      if (next !== s) {
+        s = next;
+        changed = true;
+      }
+    }
+
+    // Phrases after separators (treat as a "new segment")
+    for (const phrase of openingphrases) {
+      const re = new RegExp(
+        `([\\n\\r]|—|–|-)\\s*(?:[\\-–—•*]+\\s*)?(?:hey|hi|hello)?[\\s,!.:-]*\\b${escapeRegex(
+          phrase
+        )}\\b[\\s,!.:-]*`,
+        "gi"
+      );
+      const next = s.replace(re, "$1 ");
+      if (next !== s) {
+        s = next;
+        changed = true;
+      }
+    }
+
+    for (const phrase of openingphrases) {
+      const re = new RegExp(
+        `(:)\\s*(?:hey|hi|hello)?[\\s,!.:-]*\\b${escapeRegex(phrase)}\\b[\\s,!.:-]*`,
+        "gi"
+      );
+      const next = s.replace(re, "$1 ");
       if (next !== s) {
         s = next;
         changed = true;
@@ -101,6 +129,37 @@ function reduceAmbiguity(prompt) {
     reduced = s;
     if (!changed) break;
   }
+
+  // Remove fluff anywhere, but protect quoted text and code blocks so we don't change meaning.
+  // Example: keep the "thanks" in: My friend said "thanks" is overused...
+  const protectedChunks = [];
+  const protect = (text, re) =>
+    text.replace(re, (m) => {
+      const key = `__ECO_PROTECT_${protectedChunks.length}__`;
+      protectedChunks.push(m);
+      return key;
+    });
+
+  let working = reduced;
+  // Protect fenced code blocks
+  working = protect(working, /```[\s\S]*?```/g);
+  // Protect double-quoted and single-quoted text
+  working = protect(working, /"(?:\\.|[^"\\])*"/g);
+  working = protect(working, /'(?:\\.|[^'\\])*'/g);
+
+  for (const phrase of ambiguousPhrases) {
+    // Whole-word-ish removal to avoid nuking inside other words.
+    // Also allow surrounding punctuation/spaces.
+    const re = new RegExp(
+      `(^|[\\s,!.?:;\\-–—()\\[\\]{}])\\b${escapeRegex(phrase)}\\b(?=$|[\\s,!.?:;\\-–—()\\[\\]{}])`,
+      "gi"
+    );
+    working = working.replace(re, "$1");
+  }
+
+  // Restore protected chunks
+  working = working.replace(/__ECO_PROTECT_(\d+)__/g, (_, idx) => protectedChunks[Number(idx)] ?? "");
+  reduced = working;
 
   // Light cleanup of repeated punctuation/whitespace.
   reduced = reduced.replace(/\s+([?.!,;:])/g, "$1");
