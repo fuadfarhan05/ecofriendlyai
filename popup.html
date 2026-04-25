@@ -5,8 +5,22 @@
 </head>
 <body>
   <div class="popup-header">
-    <span>🌿</span>
-    <h2>Eco Mode</h2>
+    <div class="water-tracker">
+      <svg viewBox="0 0 80 80" width="80" height="80" style="display:block;">
+        <circle cx="40" cy="40" r="33" fill="none" stroke="#1a3a22" stroke-width="5"/>
+        <circle cx="40" cy="40" r="33" fill="none" stroke="#38bdf8" stroke-width="5"
+                stroke-dasharray="207.3" stroke-dashoffset="207.3"
+                stroke-linecap="round"
+                transform="rotate(-90 40 40)"
+                id="water-ring"/>
+        <rect x="36" y="19" width="8" height="5" rx="1.5" fill="#38bdf8"/>
+        <polygon points="36,24 30,30 50,30 44,24" fill="#38bdf8" opacity="0.75"/>
+        <rect x="30" y="30" width="20" height="29" rx="6" fill="none" stroke="#38bdf8" stroke-width="2"/>
+        <line x1="35" y1="34" x2="35" y2="56" stroke="#38bdf8" stroke-width="1.5" opacity="0.4" stroke-linecap="round"/>
+      </svg>
+      <div class="water-label">Water Saved</div>
+      <div class="water-ml" id="water-ml">0 ml</div>
+    </div>
   </div>
   <div class="popup-body">
     <div class="toggle-row">

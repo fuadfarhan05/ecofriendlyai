@@ -64,9 +64,26 @@ function applyState() {
   }
 }
 
-function updateWidgetStatus(message) {
+function updateWidgetStatus(message, stats) {
   const widgetStatus = document.getElementById("eco-widget-status");
   if (!widgetStatus) return;
+  // If stats provided, show water-saved message + store totals
+  if (stats && typeof stats.savedMl === "number") {
+    widgetStatus.textContent = `${formatMl(stats.savedMl)} of water reduced in this prompt`;
+    widgetStatus.className = "eco-status active";
+    if (stats.savedMl > 0) {
+      chrome.storage.local.get("totalWaterSavedMl", ({ totalWaterSavedMl }) => {
+        const newTotal =
+          Math.round(((totalWaterSavedMl || 0) + stats.savedMl) * 10000) / 10000;
+        chrome.storage.local.set({
+          totalWaterSavedMl: newTotal,
+          lastPromptSavedMl: stats.savedMl,
+        });
+      });
+    }
+    return;
+  }
+  // Fallback: just show the message
   widgetStatus.textContent = message;
   widgetStatus.className = "eco-status active";
 }
