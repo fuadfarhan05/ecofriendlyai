@@ -20,4 +20,4 @@ function reduceAmbiguity(prompt) {
 function countChar(prompt) {
     console.log(prompt.length);
     return prompt.length;
-}
+}  
