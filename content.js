@@ -35,6 +35,7 @@ document.addEventListener("keydown", (e) => {
   const prompt = el.value || el.innerText;
   setReactValue(el, reduceAmbiguity(prompt));
   countChar(prompt);
+  
 }, true);
 
 // Capture-phase click on the send button
