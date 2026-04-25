@@ -50,3 +50,12 @@ function formatMl(ml) {
   if (ml < 1000) return `${ml.toFixed(2)} ml`;
   return `${(ml / 1000).toFixed(3)} L`;
 }
+
+/* 
+When you introduce the formula:
+
+"We sourced our numbers from two peer-reviewed studies. The first is a 2025 benchmark paper by 
+Jegham and Abdelatti — How Hungry is AI? — published on arXiv in May 2025. They measured that 
+a medium GPT-4o query consumes 1.75 watt-hours of energy, and using Microsoft Azure's Water Usage 
+Effectiveness multiplier of 2 ml per watt-hour, that comes out to 3.5 ml of water per prompt."
+ */
