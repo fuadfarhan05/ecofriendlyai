@@ -27,8 +27,8 @@ function applyState() {
 }
 
 function handlePromptSubmit(el) {
-  const originalText = el.value;
-  const shortened = "hello"; // placeholder — replace with actual shortening function
+  const originalText = el.value ?? el.textContent ?? "";
+  const shortened = reduceAmbiguity(originalText); // placeholder — replace with actual shortening function
 
   const stats = calcWaterSaved(originalText.length, shortened.length);
   setReactValue(el, shortened);

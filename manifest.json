@@ -17,7 +17,7 @@
         "https://chatgpt.com/*",
         "https://chat.openai.com/*"
       ],
-      "js": ["waterStorage.js", "content.js"],
+      "js": ["waterStorage.js", "ambiguity.js", "content.js"],
       "css": ["background.css"],
       "run_at": "document_idle"
     }
