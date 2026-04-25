@@ -458,6 +458,22 @@ function showPhotoModal(stats, file, input) {
       input.files = dt.files;
       input.dispatchEvent(new Event("change", { bubbles: true }));
 
+      // Add photo water savings to the popup bottle tracker
+      const photoSavedPercent = o.tokens > 0
+        ? Math.round((tokensSaved / o.tokens) * 100)
+        : 0;
+      chrome.storage.local.get(
+        ["totalWaterSavedMl", "totalPrompts", "totalSavedPercent"],
+        (d) => {
+          chrome.storage.local.set({
+            totalWaterSavedMl: Math.round(((d.totalWaterSavedMl || 0) + waterSavedMl) * 10000) / 10000,
+            lastPromptSavedMl: waterSavedMl,
+            totalPrompts: (d.totalPrompts || 0) + 1,
+            totalSavedPercent: (d.totalSavedPercent || 0) + photoSavedPercent,
+          });
+        }
+      );
+
       // Click send after ChatGPT processes the upload
       setTimeout(() => {
         const sendBtn = document.querySelector('button[data-testid="send-button"]');
