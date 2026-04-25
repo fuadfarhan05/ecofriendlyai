@@ -1,5 +1,6 @@
 const BOTTLE_ML = 500;
 const RING_CIRCUMFERENCE = 207.3;
+const WATER_ML_PER_CHAR = 0.00175;
 
 
 function updateWaterTracker(totalMl) {
@@ -23,15 +24,33 @@ function setUI(on) {
   status.className = "status-text" + (on ? " active" : "");
 }
 
+function updateDashboard(totalWaterMl, totalPrompts, totalSavedPercent) {
+  const tokensSaved = Math.round((totalWaterMl / WATER_ML_PER_CHAR) / 4);
+  const retriesAvoided = (tokensSaved * 0.00875).toFixed(2);
+  const avgInputCut = totalPrompts > 0 ? Math.round(totalSavedPercent / totalPrompts) : 0;
+  const energySaved = (tokensSaved * 0.000125).toFixed(4);
+
+  const g = (id) => document.getElementById(id);
+  if (g("stat-tokens"))  g("stat-tokens").textContent  = tokensSaved;
+  if (g("stat-retries")) g("stat-retries").textContent = retriesAvoided;
+  if (g("stat-avgcut"))  g("stat-avgcut").textContent  = `${avgInputCut}%`;
+  if (g("stat-energy"))  g("stat-energy").textContent  = `${energySaved} Wh`;
+}
+
 async function init() {
-  const { ecoEnabled, totalWaterSavedMl } = await chrome.storage.local.get(["ecoEnabled", "totalWaterSavedMl"]);
+  const { ecoEnabled, totalWaterSavedMl, totalPrompts, totalSavedPercent } =
+    await chrome.storage.local.get(["ecoEnabled", "totalWaterSavedMl", "totalPrompts", "totalSavedPercent"]);
   setUI(!!ecoEnabled);
   updateWaterTracker(totalWaterSavedMl || 0);
+  updateDashboard(totalWaterSavedMl || 0, totalPrompts || 0, totalSavedPercent || 0);
 }
 
 chrome.storage.onChanged.addListener((changes) => {
-  if ("totalWaterSavedMl" in changes) {
-    updateWaterTracker(changes.totalWaterSavedMl.newValue || 0);
+  if ("totalWaterSavedMl" in changes || "totalPrompts" in changes) {
+    chrome.storage.local.get(["totalWaterSavedMl", "totalPrompts", "totalSavedPercent"], (d) => {
+      updateWaterTracker(d.totalWaterSavedMl || 0);
+      updateDashboard(d.totalWaterSavedMl || 0, d.totalPrompts || 0, d.totalSavedPercent || 0);
+    });
   }
 });
 

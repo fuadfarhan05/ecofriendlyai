@@ -69,18 +69,19 @@ function updateWidgetStatus(message, stats) {
   if (!widgetStatus) return;
   // If stats provided, show water-saved message + store totals
   if (stats && typeof stats.savedMl === "number") {
-    widgetStatus.textContent = `${formatMl(stats.savedMl)} of water reduced in this prompt`;
+    widgetStatus.textContent = `${formatMl(stats.savedMl)} of water reduced in this prompt (${stats.savedPercent}%)`;
     widgetStatus.className = "eco-status active";
-    if (stats.savedMl > 0) {
-      chrome.storage.local.get("totalWaterSavedMl", ({ totalWaterSavedMl }) => {
-        const newTotal =
-          Math.round(((totalWaterSavedMl || 0) + stats.savedMl) * 10000) / 10000;
+    chrome.storage.local.get(
+      ["totalWaterSavedMl", "totalPrompts", "totalSavedPercent"],
+      (d) => {
         chrome.storage.local.set({
-          totalWaterSavedMl: newTotal,
+          totalWaterSavedMl: Math.round(((d.totalWaterSavedMl || 0) + stats.savedMl) * 10000) / 10000,
           lastPromptSavedMl: stats.savedMl,
+          totalPrompts: (d.totalPrompts || 0) + 1,
+          totalSavedPercent: (d.totalSavedPercent || 0) + stats.savedPercent,
         });
-      });
-    }
+      }
+    );
     return;
   }
   // Fallback: just show the message
@@ -96,9 +97,9 @@ document.addEventListener("keydown", (e) => {
   if (!el) return;
   const prompt = el.value || el.innerText;
   const improved = reduceAmbiguity(prompt);
+  const stats = calcWaterSaved(prompt.length, improved.length);
   setReactValue(el, improved);
-  updateWidgetStatus("Prompt optimized");
-  try { countChar(prompt); } catch {}
+  updateWidgetStatus(null, stats);
 }, true);
 
 // Capture-phase click on the send button
@@ -109,9 +110,9 @@ document.addEventListener("click", (e) => {
   if (!el) return;
   const prompt = el.value || el.innerText;
   const improved = reduceAmbiguity(prompt);
+  const stats = calcWaterSaved(prompt.length, improved.length);
   setReactValue(el, improved);
-  updateWidgetStatus("Prompt optimized");
-  try { countChar(prompt); } catch {}
+  updateWidgetStatus(null, stats);
 }, true);
 
 function injectWidget() {
