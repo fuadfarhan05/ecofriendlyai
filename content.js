@@ -26,15 +26,27 @@ function applyState() {
   }
 }
 
+function handlePromptSubmit(el) {
+  const originalText = el.value ?? el.textContent ?? "";
+  const shortened = reduceAmbiguity(originalText); // placeholder — replace with actual shortening function
+
+  const stats = calcWaterSaved(originalText.length, shortened.length);
+  setReactValue(el, shortened);
+
+  const widgetStatus = document.getElementById("eco-widget-status");
+  if (widgetStatus) {
+    widgetStatus.textContent = `Saved ${formatMl(stats.savedMl)} (${stats.savedPercent}%)`;
+    widgetStatus.className = "eco-status active";
+  }
+}
+
 // Capture-phase keydown — runs before ChatGPT's handler
 document.addEventListener("keydown", (e) => {
   if (!enabled) return;
   if (e.key !== "Enter" || e.shiftKey) return;
   const el = document.querySelector("#prompt-textarea");
   if (!el) return;
-  const prompt = el.value || el.innerText;
-  setReactValue(el, reduceAmbiguity(prompt));
-  countChar(prompt);
+  handlePromptSubmit(el); // calls the function here 
 }, true);
 
 // Capture-phase click on the send button
@@ -43,8 +55,7 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest('button[data-testid="send-button"]')) return;
   const el = document.querySelector("#prompt-textarea");
   if (!el) return;
-  const prompt = el.value || el.innerText;
-  setReactValue(el, reduceAmbiguity(prompt));
+  handlePromptSubmit(el);
 }, true);
 
 function injectWidget() {
