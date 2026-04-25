@@ -32,7 +32,9 @@ document.addEventListener("keydown", (e) => {
   if (e.key !== "Enter" || e.shiftKey) return;
   const el = document.querySelector("#prompt-textarea");
   if (!el) return;
-  setReactValue(el, "hello"); // this is where we will create function to reduce the prompt btw
+  const prompt = el.value || el.innerText;
+  setReactValue(el, reduceAmbiguity(prompt));
+  countChar(prompt);
 }, true);
 
 // Capture-phase click on the send button
@@ -41,7 +43,8 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest('button[data-testid="send-button"]')) return;
   const el = document.querySelector("#prompt-textarea");
   if (!el) return;
-  setReactValue(el, "hello");
+  const prompt = el.value || el.innerText;
+  setReactValue(el, reduceAmbiguity(prompt));
 }, true);
 
 function injectWidget() {
