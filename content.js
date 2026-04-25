@@ -217,3 +217,6 @@ chrome.storage.local.get("ecoEnabled", ({ ecoEnabled }) => {
 });
 
 console.log("content script loaded");
+
+
+// testing 

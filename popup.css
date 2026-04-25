@@ -96,3 +96,25 @@ body {
 .status-text.active {
   color: #22c55e;
 }
+
+.share-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: #122b1a;
+  color: #d1fae5;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.share-btn:hover {
+  background: #173822;
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.share-btn:active {
+  transform: translateY(1px);
+}
