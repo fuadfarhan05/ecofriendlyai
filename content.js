@@ -38,6 +38,13 @@ function handlePromptSubmit(el) {
     widgetStatus.textContent = `Saved ${formatMl(stats.savedMl)} (${stats.savedPercent}%)`;
     widgetStatus.className = "eco-status active";
   }
+
+  if (stats.savedMl > 0) {
+    chrome.storage.local.get("totalWaterSavedMl", ({ totalWaterSavedMl }) => {
+      const newTotal = Math.round(((totalWaterSavedMl || 0) + stats.savedMl) * 10000) / 10000;
+      chrome.storage.local.set({ totalWaterSavedMl: newTotal });
+    });
+  }
 }
 
 // Capture-phase keydown — runs before ChatGPT's handler
