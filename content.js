@@ -1,10 +1,48 @@
 let enabled = false;
 
 function setReactValue(el, value) {
-  el.focus();
-  const doc = el.ownerDocument;
-  doc.execCommand("selectAll", false, null);
-  doc.execCommand("insertText", false, value);
+  const newValue = String(value ?? "");
+
+  // ChatGPT input is sometimes a <textarea> and sometimes a contenteditable element.
+  // Handle both so prompt actually updates visually.
+  el.focus?.();
+
+  if (el instanceof HTMLTextAreaElement || el instanceof HTMLInputElement) {
+    const proto =
+      el instanceof HTMLTextAreaElement
+        ? window.HTMLTextAreaElement.prototype
+        : window.HTMLInputElement.prototype;
+    const desc = Object.getOwnPropertyDescriptor(proto, "value");
+    const setter = desc && desc.set;
+    if (setter) setter.call(el, newValue);
+    else el.value = newValue;
+
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    return;
+  }
+
+  if (el.isContentEditable) {
+    // Replace content without execCommand; keep it simple and then fire an input event.
+    el.textContent = newValue;
+    try {
+      el.dispatchEvent(
+        new InputEvent("input", {
+          bubbles: true,
+          inputType: "insertText",
+          data: newValue,
+        })
+      );
+    } catch {
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    return;
+  }
+
+  // Fallback
+  try {
+    el.value = newValue;
+  } catch {}
+  el.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 // Apply current `enabled` state to ChatGPT UI elements and the widget
@@ -26,25 +64,28 @@ function applyState() {
   }
 }
 
-function handlePromptSubmit(el) {
-  const originalText = el.value ?? el.textContent ?? "";
-  const shortened = reduceAmbiguity(originalText); // placeholder — replace with actual shortening function
-
-  const stats = calcWaterSaved(originalText.length, shortened.length);
-  setReactValue(el, shortened);
-
+function updateWidgetStatus(message, stats) {
   const widgetStatus = document.getElementById("eco-widget-status");
-  if (widgetStatus) {
+  if (!widgetStatus) return;
+  // If stats provided, show water-saved message + store totals
+  if (stats && typeof stats.savedMl === "number") {
     widgetStatus.textContent = `${formatMl(stats.savedMl)} of water reduced in this prompt`;
     widgetStatus.className = "eco-status active";
+    if (stats.savedMl > 0) {
+      chrome.storage.local.get("totalWaterSavedMl", ({ totalWaterSavedMl }) => {
+        const newTotal =
+          Math.round(((totalWaterSavedMl || 0) + stats.savedMl) * 10000) / 10000;
+        chrome.storage.local.set({
+          totalWaterSavedMl: newTotal,
+          lastPromptSavedMl: stats.savedMl,
+        });
+      });
+    }
+    return;
   }
-
-  if (stats.savedMl > 0) {
-    chrome.storage.local.get("totalWaterSavedMl", ({ totalWaterSavedMl }) => {
-      const newTotal = Math.round(((totalWaterSavedMl || 0) + stats.savedMl) * 10000) / 10000;
-      chrome.storage.local.set({ totalWaterSavedMl: newTotal, lastPromptSavedMl: stats.savedMl });
-    });
-  }
+  // Fallback: just show the message
+  widgetStatus.textContent = message;
+  widgetStatus.className = "eco-status active";
 }
 
 // Capture-phase keydown — runs before ChatGPT's handler
@@ -53,7 +94,11 @@ document.addEventListener("keydown", (e) => {
   if (e.key !== "Enter" || e.shiftKey) return;
   const el = document.querySelector("#prompt-textarea");
   if (!el) return;
-  handlePromptSubmit(el); // calls the function here 
+  const prompt = el.value || el.innerText;
+  const improved = reduceAmbiguity(prompt);
+  setReactValue(el, improved);
+  updateWidgetStatus("Prompt optimized");
+  try { countChar(prompt); } catch {}
 }, true);
 
 // Capture-phase click on the send button
@@ -62,7 +107,11 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest('button[data-testid="send-button"]')) return;
   const el = document.querySelector("#prompt-textarea");
   if (!el) return;
-  handlePromptSubmit(el);
+  const prompt = el.value || el.innerText;
+  const improved = reduceAmbiguity(prompt);
+  setReactValue(el, improved);
+  updateWidgetStatus("Prompt optimized");
+  try { countChar(prompt); } catch {}
 }, true);
 
 function injectWidget() {
