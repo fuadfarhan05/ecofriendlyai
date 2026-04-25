@@ -266,14 +266,238 @@ chrome.storage.onChanged.addListener((changes) => {
   }
 });
 
+// ─── Photo Interceptor ────────────────────────────────────────────────────────
+
+let _ecoBypassNextUpload = false;
+
+function processImageForEco(file) {
+  return new Promise((resolve) => {
+    const originalKb = (file.size / 1024).toFixed(1);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_EDGE = 512;
+        let { width, height } = img;
+
+        const originalTiles = Math.ceil(width / 512) * Math.ceil(height / 512);
+        const originalTokens = originalTiles * 170;
+
+        let newW = width, newH = height;
+        if (newW > MAX_EDGE || newH > MAX_EDGE) {
+          if (newW >= newH) { newH = Math.floor((newH / newW) * MAX_EDGE); newW = MAX_EDGE; }
+          else              { newW = Math.floor((newW / newH) * MAX_EDGE); newH = MAX_EDGE; }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = newW; canvas.height = newH;
+        canvas.getContext("2d").drawImage(img, 0, 0, newW, newH);
+
+        const ecoB64 = canvas.toDataURL("image/jpeg", 0.8);
+        const ecoKb  = Math.round((ecoB64.length * 3 / 4) / 1024);
+        const optimizedTokens = 170;
+        const tokensSaved = Math.max(0, originalTokens - optimizedTokens);
+        const waterSavedMl = parseFloat((tokensSaved * 0.015).toFixed(2));
+
+        resolve({
+          original:  { width, height, tokens: originalTokens, sizeKb: originalKb },
+          optimized: { width: newW, height: newH, tokens: optimizedTokens, sizeKb: ecoKb },
+          tokensSaved, waterSavedMl, canvas,
+        });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function showPhotoModal(stats, file, input) {
+  document.getElementById("eco-photo-overlay")?.remove();
+  document.getElementById("eco-photo-style")?.remove();
+
+  const style = document.createElement("style");
+  style.id = "eco-photo-style";
+  style.textContent = `
+    #eco-photo-overlay {
+      position: fixed; inset: 0; z-index: 2147483646;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #eco-photo-modal {
+      width: 370px;
+      background: linear-gradient(160deg, #0d1f13 0%, #071820 100%);
+      border: 1px solid rgba(56,189,248,0.22);
+      border-radius: 20px; overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.05);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #d1fae5; animation: eco-ph-in 0.25s ease;
+    }
+    @keyframes eco-ph-in {
+      from { opacity:0; transform: scale(0.94) translateY(10px); }
+      to   { opacity:1; transform: scale(1)    translateY(0);    }
+    }
+    .eco-ph-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .eco-ph-title { font-size:14px; font-weight:700; color:#22c55e; letter-spacing:0.3px; }
+    .eco-ph-close {
+      all:unset; cursor:pointer; color:#4b7a5a; font-size:14px;
+      padding:2px 7px; border-radius:5px; transition:color .15s, background .15s;
+    }
+    .eco-ph-close:hover { color:#d1fae5; background:rgba(255,255,255,0.08); }
+    .eco-ph-stats {
+      display:flex; align-items:flex-start; gap:10px;
+      padding: 14px 16px;
+    }
+    .eco-ph-col { flex:1; }
+    .eco-ph-col-title {
+      font-size:9px; font-weight:700; letter-spacing:1.2px;
+      text-transform:uppercase; margin-bottom:8px;
+      color:rgba(167,243,208,0.55);
+    }
+    .eco-ph-col.eco-opt .eco-ph-col-title { color:rgba(56,189,248,0.65); }
+    .eco-ph-stat { font-size:12px; color:rgba(255,255,255,0.55); margin-bottom:4px; line-height:1.4; }
+    .eco-ph-stat b { color:#d1fae5; }
+    .eco-ph-divider {
+      display:flex; align-items:center; padding-top:22px;
+      color:rgba(56,189,248,0.35); font-size:18px; flex-shrink:0;
+    }
+    .eco-ph-water {
+      margin:0 16px 14px;
+      padding:11px 14px;
+      background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2);
+      border-radius:12px; text-align:center;
+    }
+    .eco-ph-water-num { font-size:22px; font-weight:800; color:#38bdf8; }
+    .eco-ph-water-label { font-size:11px; color:rgba(125,211,252,0.7); margin-top:2px; }
+    .eco-ph-actions { display:flex; gap:8px; padding:0 16px 16px; }
+    .eco-ph-cancel {
+      all:unset; flex:1; cursor:pointer; text-align:center;
+      padding:10px; border-radius:10px; font-size:13px;
+      border:1px solid rgba(255,255,255,0.1); color:rgba(209,250,229,0.6);
+      transition:background .15s;
+    }
+    .eco-ph-cancel:hover { background:rgba(255,255,255,0.06); }
+    .eco-ph-confirm {
+      all:unset; flex:2; cursor:pointer; text-align:center;
+      padding:10px 14px; border-radius:10px; font-size:13px; font-weight:600;
+      background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.35);
+      color:#38bdf8; transition:background .15s, border-color .15s;
+    }
+    .eco-ph-confirm:hover { background:rgba(56,189,248,0.22); border-color:rgba(56,189,248,0.6); }
+  `;
+  document.head.appendChild(style);
+
+  const { original: o, optimized: opt, tokensSaved, waterSavedMl, canvas } = stats;
+
+  const overlay = document.createElement("div");
+  overlay.id = "eco-photo-overlay";
+  overlay.innerHTML = `
+    <div id="eco-photo-modal">
+      <div class="eco-ph-header">
+        <span class="eco-ph-title">🌿 Eco Photo Optimizer</span>
+        <button class="eco-ph-close" id="eco-ph-close">✕</button>
+      </div>
+      <div class="eco-ph-stats">
+        <div class="eco-ph-col">
+          <div class="eco-ph-col-title">Original</div>
+          <div class="eco-ph-stat">📐 <b>${o.width} × ${o.height}px</b></div>
+          <div class="eco-ph-stat">🔲 <b>${o.tokens}</b> tokens</div>
+          <div class="eco-ph-stat">📦 <b>${o.sizeKb} KB</b></div>
+        </div>
+        <div class="eco-ph-divider">→</div>
+        <div class="eco-ph-col eco-opt">
+          <div class="eco-ph-col-title">Optimized</div>
+          <div class="eco-ph-stat">📐 <b>${opt.width} × ${opt.height}px</b></div>
+          <div class="eco-ph-stat">🔲 <b>${opt.tokens}</b> tokens</div>
+          <div class="eco-ph-stat">📦 <b>~${opt.sizeKb} KB</b></div>
+        </div>
+      </div>
+      <div class="eco-ph-water">
+        <div class="eco-ph-water-num">💧 ${waterSavedMl} ml saved</div>
+        <div class="eco-ph-water-label">${tokensSaved} tokens reduced by resizing to 512px</div>
+      </div>
+      <div class="eco-ph-actions">
+        <button class="eco-ph-cancel" id="eco-ph-cancel">Upload original</button>
+        <button class="eco-ph-confirm" id="eco-ph-confirm">Reduce ${waterSavedMl} ml &amp; Send</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.remove();
+    document.getElementById("eco-photo-style")?.remove();
+  };
+
+  document.getElementById("eco-ph-close").addEventListener("click", close);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
+
+  document.getElementById("eco-ph-cancel").addEventListener("click", () => {
+    close();
+    _ecoBypassNextUpload = true;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  document.getElementById("eco-ph-confirm").addEventListener("click", () => {
+    close();
+    canvas.toBlob((blob) => {
+      const optimizedFile = new File(
+        [blob],
+        file.name.replace(/\.\w+$/, ".jpg"),
+        { type: "image/jpeg" }
+      );
+      _ecoBypassNextUpload = true;
+      const dt = new DataTransfer();
+      dt.items.add(optimizedFile);
+      input.files = dt.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+
+      // Click send after ChatGPT processes the upload
+      setTimeout(() => {
+        const sendBtn = document.querySelector('button[data-testid="send-button"]');
+        if (sendBtn) sendBtn.click();
+      }, 900);
+    }, "image/jpeg", 0.8);
+  });
+}
+
+function interceptFileInput(input) {
+  if (input._ecoPhoto) return;
+  input._ecoPhoto = true;
+  input.addEventListener("change", async (e) => {
+    if (!enabled) return;
+    if (_ecoBypassNextUpload) { _ecoBypassNextUpload = false; return; }
+    const file = e.target.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    e.stopImmediatePropagation();
+    const stats = await processImageForEco(file);
+    showPhotoModal(stats, file, input);
+  }, true);
+}
+
+function startPhotoInterceptor() {
+  document.querySelectorAll('input[type="file"]').forEach(interceptFileInput);
+  new MutationObserver((mutations) => {
+    for (const { addedNodes } of mutations) {
+      for (const node of addedNodes) {
+        if (node.nodeType !== 1) continue;
+        if (node.matches?.('input[type="file"]')) interceptFileInput(node);
+        node.querySelectorAll?.('input[type="file"]').forEach(interceptFileInput);
+      }
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
+}
+
 // Init: read persisted state then inject widget
 chrome.storage.local.get("ecoEnabled", ({ ecoEnabled }) => {
   enabled = !!ecoEnabled;
   injectWidget();
   applyState();
+  startPhotoInterceptor();
 });
-
-console.log("content script loaded");
-
-
-// testing 
