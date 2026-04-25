@@ -1,6 +1,6 @@
 openingphrases = ["can you", "can", "you", "can you please", "please"]
 
-closingphrase = ["Thank you", "GoodBye", "Okay Bye"]
+closingphrase = ["Thank you", "GoodBye", "Okay Bye", "thanks"]
 
 function findAmbiguity(prompt) {
   const ambiguousPhrases = [...openingphrases, ...closingphrase];
