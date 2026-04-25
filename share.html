@@ -1,54 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Eco Mode — Share</title>
-  <link rel="stylesheet" href="share.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Eco Impact</title>
+  <link rel="stylesheet" href="share.css">
 </head>
 <body>
-  <main class="page">
-    <header class="header">
-      <div class="brand">
-        <div>
-          <div class="title">Eco Mode</div>
-          <div class="subtitle">Share what you’re saving</div>
+  <div class="scene">
+
+    <div class="phone-card" id="phoneCard">
+      <div class="card-body">
+        <div class="avatar-zone" id="avatarZone" title="Click to add photo">
+          <div class="avatar-ring">
+            <img class="avatar-img" id="avatarImg" alt="" style="display:none">
+            <div class="avatar-empty" id="avatarEmpty">
+              <svg viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="15" r="7" fill="currentColor" opacity="0.55"/>
+                <path d="M4 38c0-8.8 7.2-16 16-16s16 7.2 16 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.55"/>
+              </svg>
+              <span>Add Photo</span>
+            </div>
+          </div>
+          <input type="file" id="photoInput" accept="image/*">
+        </div>
+
+        <div class="glow-orb"></div>
+
+        <div class="statement">
+          <p class="pre-text">I reduced a total of</p>
+          <p class="amount" id="amount">— ml</p>
+          <p class="post-text">of water</p>
+        </div>
+
+        <p class="sub-text">by using eco AI</p>
+
+        <div class="bottles-row" id="bottlesRow">
+          <span class="dot"></span>
+          <span id="bottlesText">calculating…</span>
         </div>
       </div>
-    </header>
 
-    <section class="card">
-      <div class="card-top">
-        <div class="badge" id="badge">Eco Mode Active</div>
-        <div class="big" id="bigStat">0</div>
-        <div class="label">estimated “retry loops” prevented</div>
+      <div class="card-footer">
+        <span class="footer-brand">eco AI</span>
+        <span class="footer-date" id="footerDate"></span>
       </div>
+    </div>
 
-      <div class="meta">
-        <div class="meta-row">
-          <span class="meta-k">Water Saved</span>
-          <span class="meta-v" id="streak">—</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-k">Since</span>
-          <span class="meta-v" id="since">—</span>
-        </div>
-      </div>
-
-      <div class="share-box">
-        <div class="share-title">Share page</div>
-        <div class="skeleton">
-          This page will soon show shareable impact stats (water / energy / CO₂) once the team finalizes the model
-        </div>
-      </div>
-    </section>
-
-    <footer class="footer">
-      <div class="fineprint">
-        These are estimates meant to encourage clearer prompts and fewer follow-ups
-      </div>
-    </footer>
-  </main>
+    <p class="hint">Screenshot the card above to share your impact</p>
+  </div>
 
   <script src="share.js"></script>
 </body>
