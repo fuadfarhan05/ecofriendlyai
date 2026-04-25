@@ -35,14 +35,14 @@ function handlePromptSubmit(el) {
 
   const widgetStatus = document.getElementById("eco-widget-status");
   if (widgetStatus) {
-    widgetStatus.textContent = `Saved ${formatMl(stats.savedMl)} (${stats.savedPercent}%)`;
+    widgetStatus.textContent = `${formatMl(stats.savedMl)} of water reduced in this prompt`;
     widgetStatus.className = "eco-status active";
   }
 
   if (stats.savedMl > 0) {
     chrome.storage.local.get("totalWaterSavedMl", ({ totalWaterSavedMl }) => {
       const newTotal = Math.round(((totalWaterSavedMl || 0) + stats.savedMl) * 10000) / 10000;
-      chrome.storage.local.set({ totalWaterSavedMl: newTotal });
+      chrome.storage.local.set({ totalWaterSavedMl: newTotal, lastPromptSavedMl: stats.savedMl });
     });
   }
 }
