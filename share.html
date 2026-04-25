@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Eco Mode — Share</title>
+  <link rel="stylesheet" href="share.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <div class="brand">
+        <span class="leaf" aria-hidden="true">🌿</span>
+        <div>
+          <div class="title">Eco Mode</div>
+          <div class="subtitle">Share what you’re saving</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="card-top">
+        <div class="badge" id="badge">Eco Mode Active</div>
+        <div class="big" id="bigStat">0</div>
+        <div class="label">estimated “retry loops” prevented</div>
+      </div>
+
+      <div class="meta">
+        <div class="meta-row">
+          <span class="meta-k">Water Saved</span>
+          <span class="meta-v" id="streak">—</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-k">Since</span>
+          <span class="meta-v" id="since">—</span>
+        </div>
+      </div>
+
+      <div class="share-box">
+        <div class="share-title">Share page</div>
+        <div class="skeleton">
+          This page will soon show shareable impact stats (water / energy / CO₂) once the team finalizes the model
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="fineprint">
+        These are estimates meant to encourage clearer prompts and fewer follow-ups
+      </div>
+    </footer>
+  </main>
+
+  <script src="share.js"></script>
+</body>
+</html>

@@ -16,4 +16,9 @@ document.getElementById("toggle").addEventListener("change", async (e) => {
   setUI(newVal);
 });
 
+document.getElementById("share").addEventListener("click", async () => {
+  const url = chrome.runtime.getURL("share.html");
+  await chrome.tabs.create({ url });
+});
+
 init();
