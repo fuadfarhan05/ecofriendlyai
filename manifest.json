@@ -1,15 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT Green Mode",
+  "name": "eco AI",
   "version": "1.0",
-  "description": "Adds green UI effects and modifies ChatGPT behavior.",
+  "description": "conserve water while using chatGPT",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://chat.openai.com/*"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "ecoai.png",
+      "48": "ecoai.png",
+      "128": "ecoai.png"
+    }
+  },
+  "icons": {
+    "16": "ecoai.png",
+    "48": "ecoai.png",
+    "128": "ecoai.png"
   },
   "content_scripts": [
     {
